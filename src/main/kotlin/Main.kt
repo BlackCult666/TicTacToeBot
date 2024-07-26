@@ -1,5 +1,5 @@
 import callback.*
-import database.MongoWrapper
+import database.Database
 import game.Matches
 import game.lobby.Lobbies
 import inline.StartInlineQuery
@@ -11,17 +11,17 @@ class TicTacToeBot(
 ) : LongPollingBot(bot) {
 
     init {
-        val mongoWrapper = MongoWrapper()
+        val database = Database()
         val lobbies = Lobbies()
         val matches = Matches()
 
         events.apply {
-            registerUpdateHandler(BackCallback(bot, mongoWrapper))
-            registerUpdateHandler(LangCallback(bot, mongoWrapper))
-            registerUpdateHandler(StartInlineQuery(bot, mongoWrapper))
-            registerUpdateHandler(MatchCallback(bot, matches, mongoWrapper))
-            registerUpdateHandler(StartCallback(bot, lobbies, mongoWrapper))
-            registerUpdateHandler(LobbyCallback(bot, lobbies, matches, mongoWrapper))
+            registerUpdateHandler(BackCallback(bot, database))
+            registerUpdateHandler(LangCallback(bot, database))
+            registerUpdateHandler(StartInlineQuery(bot, database))
+            registerUpdateHandler(MatchCallback(bot, matches, database))
+            registerUpdateHandler(StartCallback(bot, lobbies, database))
+            registerUpdateHandler(LobbyCallback(bot, lobbies, matches, database))
         }
     }
 }

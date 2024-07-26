@@ -7,10 +7,8 @@ import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.Sorts
 import org.bson.Document
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
 
-class MongoWrapper {
+class Database {
     private val client: MongoClient = MongoClients.create("mongodb://localhost:27017")
     private val database: MongoDatabase = client.getDatabase("tictactoeBot")
     private var collection: MongoCollection<Document> = database.getCollection("users")
@@ -21,7 +19,8 @@ class MongoWrapper {
         document.append("locale", "en")
         document.append("matchWon", 0)
         document.append("matchLost", 0)
-        document.append("ratio", "NDA")
+        document.append("actualStreak", 0)
+        document.append("bestStreak", 0)
         collection.insertOne(document)
     }
 
@@ -42,9 +41,17 @@ class MongoWrapper {
         val locale = user?.getString("locale") ?: "en"
         val matchWon = user?.getInteger("matchWon") ?: 0
         val matchLost = user?.getInteger("matchLost") ?: 0
-        val ratio = user?.getString("ratio") ?: "NDA"
+        val actualStreak = user?.getInteger("actualStreak") ?: 0
+        val bestStreak = user?.getInteger("bestStreak") ?: 0
 
-        return UserInfo(id, firstName, locale, matchWon, matchLost, ratio)
+        return UserInfo(id, firstName, locale, matchWon, matchLost, actualStreak, bestStreak)
+    }
+
+
+    fun updateFirstName(id: Long, newFirstName: String) {
+        val filter = Document("id", id)
+        val update = BasicDBObject("\$set", Document("firstName", newFirstName))
+        collection.updateOne(filter, update)
     }
 
     fun getTopUsers(): List<UserInfo> {
@@ -58,7 +65,8 @@ class MongoWrapper {
                     locale = doc.getString("locale"),
                     matchWon = doc.getInteger("matchWon"),
                     matchLost = doc.getInteger("matchLost"),
-                    ratio = doc.getString("ratio")
+                    actualStreak = doc.getInteger("actualStreak"),
+                    bestStreak = doc.getInteger("bestStreak")
                 )
             }
             .toList()
@@ -71,24 +79,20 @@ class MongoWrapper {
         user?.let {
             val matchWon = it.getInteger("matchWon")
             val matchLost = it.getInteger("matchLost")
+            val actualStreak = it.getInteger("actualStreak")
+            val bestStreak = it.getInteger("bestStreak")
 
             val updatedMatchWon = if (won) matchWon + 1 else matchWon
             val updatedMatchLost = if (!won) matchLost + 1 else matchLost
-
-            val ratio = if (updatedMatchLost > 0) updatedMatchWon.toDouble() / updatedMatchLost else updatedMatchWon.toDouble()
-
-            val symbols = DecimalFormatSymbols().apply {
-                decimalSeparator = '.'
-            }
-
-            val decimalFormat = DecimalFormat("#.00", symbols)
-            val formattedRatio = decimalFormat.format(ratio)
+            val updatedActualStreak = if (won) actualStreak + 1 else 0
+            val updatedBestStreak = if (actualStreak > bestStreak) actualStreak else bestStreak
 
             val update = BasicDBObject("\$set", BasicDBObject(
                 mapOf(
                     "matchWon" to updatedMatchWon,
                     "matchLost" to updatedMatchLost,
-                    "ratio" to formattedRatio
+                    "actualStreak" to updatedActualStreak,
+                    "bestStreak" to updatedBestStreak
                 )
             )
             )
@@ -109,5 +113,6 @@ data class UserInfo(
     val locale: String,
     val matchWon: Int,
     val matchLost: Int,
-    val ratio: String,
+    val actualStreak: Int,
+    val bestStreak: Int
 )

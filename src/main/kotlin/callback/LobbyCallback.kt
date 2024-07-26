@@ -1,6 +1,6 @@
 package callback
 
-import database.MongoWrapper
+import database.Database
 import game.Matches
 import game.lobby.Lobbies
 import game.lobby.Lobby
@@ -15,7 +15,7 @@ class LobbyCallback(
     private val bot: Bot,
     private val lobbies: Lobbies,
     private val matches: Matches,
-    private val mongoWrapper: MongoWrapper
+    private val database: Database
 ) : CallbackQueryHandler {
 
     override fun onCallbackQuery(callbackQuery: CallbackQuery) {
@@ -33,7 +33,10 @@ class LobbyCallback(
             return
         }
 
-        val lang = mongoWrapper.getUserLang(lobby.host.id)
+        val savedName = database.getUserInfo(sender.id).firstName
+        if (savedName != sender.firstName) database.updateFirstName(sender.id, sender.firstName)
+
+        val lang = database.getUserLang(lobby.host.id)
 
         when (action) {
             "join" -> handleJoin(callbackQuery, lang, sender, lobby)
@@ -81,10 +84,15 @@ class LobbyCallback(
 
         val players = listOf(lobby.opponent, lobby.host).shuffled()
 
-        val match = matches.createMatch(lobby.id, lobby.host, players[0]!!, players[1]!!)
+        val xPlayer = players[0]!!
+        val oPlayer = players[1]!!
 
-        val gameMessage = Languages.getMessage(lang, "match_progress")
+        val match = matches.createMatch(lobby.id, lobby.host, xPlayer, oPlayer)
+
+        val gameMessage = Languages.getMessage(lang, "match_started")
             .replace("{currentPlayer}", mentionPlayer(match.currentPlayer.id, match.currentPlayer.firstName))
+            .replace("{xPlayer}", mentionPlayer(xPlayer.id, xPlayer.firstName))
+            .replace("{oPlayer}", mentionPlayer(oPlayer.id, oPlayer.firstName))
 
         bot.editMessage(callbackQuery, gameMessage, match.getKeyboard(lang, false))
 

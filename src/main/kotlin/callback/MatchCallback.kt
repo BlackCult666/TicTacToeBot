@@ -1,6 +1,6 @@
 package callback
 
-import database.MongoWrapper
+import database.Database
 import game.Match
 import game.MatchResult
 import game.Matches
@@ -16,7 +16,7 @@ import utils.mentionPlayer
 class MatchCallback(
     private val bot: Bot,
     private val matches: Matches,
-    private val mongoWrapper: MongoWrapper
+    private val database: Database
 ) : CallbackQueryHandler {
 
     override fun onCallbackQuery(callbackQuery: CallbackQuery) {
@@ -34,7 +34,10 @@ class MatchCallback(
             return
         }
 
-        val lang = mongoWrapper.getUserLang(match.host.id)
+        val savedName = database.getUserInfo(sender.id).firstName
+        if (savedName != sender.firstName) database.updateFirstName(sender.id, sender.firstName)
+
+        val lang = database.getUserLang(match.host.id)
 
         handleMatch(callbackQuery, lang, sender, match, index.toInt())
     }
@@ -60,17 +63,29 @@ class MatchCallback(
     }
 
     private fun handleInProgress(callbackQuery: CallbackQuery, lang: String, match: Match) {
+        val symbol = if (match.currentPlayer == match.playerX) "❌" else "⭕"
         val text = Languages.getMessage(lang, "match_progress")
             .replace("{currentPlayer}", mentionPlayer(match.currentPlayer.id, match.currentPlayer.firstName))
+            .replace("{teamSymbol}", symbol)
 
         bot.editMessage(callbackQuery, text, match.getKeyboard(lang, false))
     }
 
     private fun handleFinals(callbackQuery: CallbackQuery, lang: String, winner: User, otherPlayer: User, match: Match, draw: Boolean) {
         val string = if (draw) "match_draw" else "match_won"
+        val symbol = if (winner == match.playerX) "❌" else "⭕"
+
+        if (!database.userExists(winner.id)) database.addUser(winner.id, winner.firstName)
+        if (!database.userExists(otherPlayer.id)) database.addUser(otherPlayer.id, otherPlayer.firstName)
+
+        database.updateStats(winner.id, true)
+        database.updateStats(otherPlayer.id, false)
+
         val text = Languages.getMessage(lang, string)
             .replace("{firstPlayer}", mentionPlayer(winner.id, winner.firstName))
             .replace("{secondPlayer}", mentionPlayer(otherPlayer.id, otherPlayer.firstName))
+            .replace("{winnerName}", winner.firstName)
+            .replace("{winnerSymbol}", symbol)
 
         bot.editMessage(callbackQuery, text, match.getKeyboard(lang, true))
         matches.removeMatch(match.id)

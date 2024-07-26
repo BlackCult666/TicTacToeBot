@@ -8,6 +8,7 @@ import locale.Languages
 fun getStartKeyboard(lang: String) : InlineKeyboardMarkup {
     val buttons = listOf(
         CallbackDataInlineKeyboardButton(Languages.getMessage(lang, "menu_play_button"), "start_play"),
+        CallbackDataInlineKeyboardButton(Languages.getMessage(lang, "menu_stats_button"), "start_stats"),
         CallbackDataInlineKeyboardButton(Languages.getMessage(lang, "menu_lang_button"), "start_languages")
     )
 

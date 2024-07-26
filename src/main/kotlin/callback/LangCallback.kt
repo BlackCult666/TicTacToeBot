@@ -1,6 +1,6 @@
 package callback
 
-import database.MongoWrapper
+import database.Database
 import io.github.ageofwar.telejam.Bot
 import io.github.ageofwar.telejam.callbacks.CallbackQuery
 import io.github.ageofwar.telejam.callbacks.CallbackQueryHandler
@@ -12,7 +12,7 @@ import utils.getBackButton
 
 class LangCallback(
     private val bot: Bot,
-    private val mongoWrapper: MongoWrapper
+    private val database: Database
 ) : CallbackQueryHandler {
 
     override fun onCallbackQuery(callbackQuery: CallbackQuery) {
@@ -20,17 +20,17 @@ class LangCallback(
         if (!data.startsWith("lang")) return
 
         val sender = callbackQuery.sender
-        if (!mongoWrapper.userExists(sender.id)) mongoWrapper.addUser(sender.id, sender.firstName)
+        if (!database.userExists(sender.id)) database.addUser(sender.id, sender.firstName)
 
         val selectedLang = data.split("_")[1]
-        val userLang = mongoWrapper.getUserLang(sender.id)
+        val userLang = database.getUserLang(sender.id)
 
         if (selectedLang == userLang) {
             bot.answerCallback(callbackQuery, Languages.getMessage(userLang, "already_selected_lang"), true)
             return
         }
 
-        mongoWrapper.setLang(sender.id, selectedLang)
+        database.setLang(sender.id, selectedLang)
 
         bot.editMessage(callbackQuery, Languages.getMessage(selectedLang, "lang_changed"), InlineKeyboardMarkup(
             getBackButton(selectedLang)

@@ -1,6 +1,6 @@
 package inline
 
-import database.MongoWrapper
+import database.Database
 import io.github.ageofwar.telejam.Bot
 import io.github.ageofwar.telejam.inline.InlineQuery
 import io.github.ageofwar.telejam.inline.InlineQueryHandler
@@ -13,11 +13,11 @@ import utils.getStartKeyboard
 
 class StartInlineQuery(
     private val bot: Bot,
-    private val mongoWrapper: MongoWrapper
+    private val database: Database
 ) : InlineQueryHandler {
 
     override fun onInlineQuery(inlineQuery: InlineQuery) {
-        val lang = mongoWrapper.getUserLang(inlineQuery.sender.id)
+        val lang = database.getUserLang(inlineQuery.sender.id)
         val article = InlineQueryResultArticle(
             inlineQuery.id,
             Languages.getMessage(lang, "menu_inline_title"),
