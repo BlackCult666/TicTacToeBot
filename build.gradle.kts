@@ -18,6 +18,7 @@ repositories {
 
 dependencies {
     implementation("com.github.AgeOfWar:Telejam:v7.15")
+    implementation("org.mongodb:mongodb-driver-sync:4.2.3")
 }
 
 tasks.test {

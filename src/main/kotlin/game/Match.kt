@@ -4,9 +4,11 @@ import io.github.ageofwar.telejam.inline.CallbackDataInlineKeyboardButton
 import io.github.ageofwar.telejam.inline.InlineKeyboardButton
 import io.github.ageofwar.telejam.replymarkups.InlineKeyboardMarkup
 import io.github.ageofwar.telejam.users.User
+import locale.Languages
 
 class Match(
     val id: String,
+    val host: User,
     val playerX: User,
     val playerO: User
 ) {
@@ -52,7 +54,7 @@ class Match(
         return MatchResult.IN_PROGRESS
     }
 
-    fun getKeyboard(rematch: Boolean): InlineKeyboardMarkup {
+    fun getKeyboard(lang: String, rematch: Boolean): InlineKeyboardMarkup {
         val buttons = mutableListOf<InlineKeyboardButton>()
         for (i in 0..8) {
             val row = i / 3
@@ -61,7 +63,7 @@ class Match(
             buttons.add(CallbackDataInlineKeyboardButton(buttonText, "match_${id}_$i"))
         }
 
-        if (rematch) buttons.add(CallbackDataInlineKeyboardButton("Play again", "start_play"))
+        if (rematch) buttons.add(CallbackDataInlineKeyboardButton(Languages.getMessage(lang, "play_again_button"), "start_play"))
 
         return InlineKeyboardMarkup.fromColumns(3, buttons)
     }

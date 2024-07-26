@@ -6,8 +6,8 @@ import java.util.concurrent.ConcurrentHashMap
 class Matches {
     private val matches = ConcurrentHashMap<String, Match>()
 
-    fun createMatch(id: String, playerX: User, playerO: User) : Match {
-        val match = Match(id, playerX, playerO)
+    fun createMatch(id: String, host: User, playerX: User, playerO: User) : Match {
+        val match = Match(id, host, playerX, playerO)
         matches[id] = match
         return match
     }
